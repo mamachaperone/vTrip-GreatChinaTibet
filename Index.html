@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Great China and Tibet Trip | Personal Travel Companion</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs (Modular / v11 compatible compatibility layer) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        tibet: {
+                            red: '#8B0000',
+                            gold: '#D4AF37',
+                            blue: '#1E3A8A'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .media-hover:hover .media-overlay { opacity: 1; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen pb-12">
+
+    <!-- Top Navigation & Auth Header -->
+    <header class="bg-slate-900/90 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md px-4 sm:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🏔️</span>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg text-white leading-tight">My Great China & Tibet Trip</h1>
+                    <p class="text-[11px] text-amber-400 font-medium">Oct 30 – Nov 21, 2026 • 22 Days Odyssey</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Config Status Badge -->
+                <button onclick="openConfigModal()" id="cfgBadge" class="hidden sm:flex items-center gap-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl transition">
+                    <span class="w-2 h-2 rounded-full bg-amber-400" id="cfgDot"></span>
+                    <span id="cfgStatusText">Firebase Settings</span>
+                </button>
+
+                <!-- Auth Widget -->
+                <div id="authWidget" class="flex items-center gap-2">
+                    <button onclick="loginWithGoogle()" id="loginBtn" class="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-xl shadow-lg transition">
+                        <i class="fa-brands fa-google text-slate-950"></i>
+                        <span>Sign In</span>
+                    </button>
+                    
+                    <div id="userProfile" class="hidden flex items-center gap-2 bg-slate-800/90 border border-slate-700 px-2.5 py-1 rounded-xl">
+                        <img id="userAvatar" src="" alt="User Avatar" class="w-7 h-7 rounded-full border border-amber-400/50">
+                        <div class="hidden md:block text-left">
+                            <p id="userName" class="text-xs font-semibold text-white leading-tight"></p>
+                            <p class="text-[9px] text-emerald-400">Synced to Cloud</p>
+                        </div>
+                        <button onclick="logoutFirebase()" class="text-slate-400 hover:text-red-400 text-xs ml-1 p-1">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Banner & Altitude Route Tracker -->
+    <div class="relative bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-amber-500/20 py-8 px-4 sm:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+                <div>
+                    <span class="inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-3 py-1 rounded-full font-semibold mb-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Multi-Device Personal Sync App
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Interactive Itinerary & Media Hub</h2>
+                    <p class="text-slate-400 text-xs sm:text-sm mt-1">Explore daily schedules, AMap routes, and sync photos/videos under your Google Account.</p>
+                </div>
+                
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="openSetupGuide()" class="bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info"></i> How to Deploy to Firebase
+                    </button>
+                    <button onclick="openUploadModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl shadow-lg transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus-circle"></i> Add Photo/Video
+                    </button>
+                </div>
+            </div>
+
+            <!-- Altitude Progression Tracker -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-bold text-amber-400 uppercase tracking-wider"><i class="fa-solid fa-mountain mr-1"></i> Altitude Profile & Route</span>
+                    <span class="text-[11px] text-slate-400">Peak: Tanggula Pass (5,072m) • Lhasa (3,650m)</span>
+                </div>
+                <div class="grid grid-cols-5 gap-2 text-center text-xs">
+                    <div class="bg-slate-800/70 p-2 rounded-xl border border-slate-700/50">
+                        <span class="block font-bold text-slate-200">Xi'an</span>
+                        <span class="text-[10px] text-slate-400">400m</span>
+                    </div>
+                    <div class="bg-slate-800/70 p-2 rounded-xl border border-slate-700/50">
+                        <span class="block font-bold text-sky-300">Xining</span>
+                        <span class="text-[10px] text-slate-400">2,270m</span>
+                    </div>
+                    <div class="bg-amber-500/10 p-2 rounded-xl border border-amber-500/40">
+                        <span class="block font-bold text-amber-300">Tibet</span>
+                        <span class="text-[10px] text-amber-400">3,650m – 3,800m</span>
+                    </div>
+                    <div class="bg-slate-800/70 p-2 rounded-xl border border-slate-700/50">
+                        <span class="block font-bold text-emerald-300">Emei Summit</span>
+                        <span class="text-[10px] text-slate-400">3,079m</span>
+                    </div>
+                    <div class="bg-slate-800/70 p-2 rounded-xl border border-slate-700/50">
+                        <span class="block font-bold text-rose-300">Chongqing</span>
+                        <span class="text-[10px] text-slate-400">250m</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hub Navigation Tabs -->
+    <div class="sticky top-[57px] z-30 bg-slate-900/95 border-b border-slate-800 px-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto no-scrollbar py-3 gap-2">
+            <button onclick="filterHub('all')" class="nav-btn active px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition bg-amber-500 text-slate-950">
+                <i class="fa-solid fa-globe mr-1"></i> Full Itinerary
+            </button>
+            <button onclick="filterHub('xian')" class="nav-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+                🏛️ Hub 1: Xi'an
+            </button>
+            <button onclick="filterHub('xining')" class="nav-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+                🕌 Hub 2: Xining & Rail
+            </button>
+            <button onclick="filterHub('tibet')" class="nav-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+                🏔️ Hub 3: Tibet Plateau
+            </button>
+            <button onclick="filterHub('chengdu')" class="nav-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+                🐼 Hub 4: Chengdu & Emei
+            </button>
+            <button onclick="filterHub('chongqing')" class="nav-btn px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+                🌃 Hub 5: Chongqing
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-12">
+
+        <!-- HUB 1: XI'AN -->
+        <section id="hub-xian" class="hub-card bg-slate-900/70 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-4">
+                <div>
+                    <span class="text-xs font-bold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">Hub 1 • 3 Nights</span>
+                    <h3 class="text-2xl font-bold text-white mt-2">🏛️ Xi'an Ancient Capital (西安)</h3>
+                    <p class="text-slate-400 text-xs mt-1">Oct 30, 2026 – Nov 2, 2026 • Hotel Base: Orange Hotel Bell Tower Branch</p>
+                </div>
+                <a href="https://surl.amap.com/l7LyTPcB5Ay" target="_blank" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs px-3.5 py-2 rounded-xl border border-slate-700 transition">
+                    <i class="fa-solid fa-map-location-dot"></i> AMap: 桔子酒店(西安钟楼店)
+                </a>
+            </div>
+
+            <!-- Schedule Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-amber-400">Oct 30 - 31</span>
+                        <span class="text-[10px] bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded">Scoot Flight</span>
+                    </div>
+                    <ul class="text-xs space-y-2 text-slate-300">
+                        <li>✈️ <strong>Scoot TR134:</strong> SIN-T1 (19:15) ➔ XIY-T5 (00:45 +1d)</li>
+                        <li>🏨 Late Check-in at Orange Hotel (北大街188号)</li>
+                    </ul>
+                    <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-400">
+                        <a href="https://surl.amap.com/IQeYeKD46d" target="_blank" class="text-sky-400 underline">AMap: XIY Airport T5 Terminal</a>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-amber-400">Oct 31 - Nov 1</span>
+                        <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">Explore</span>
+                    </div>
+                    <ul class="text-xs space-y-2 text-slate-300">
+                        <li>🧱 Explore Xi'an Ancient City Wall & South Gate</li>
+                        <li>🍜 Muslim Quarter (回民街) Food Tasting</li>
+                        <li>🔔 Bell Tower & Drum Tower Lightup</li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-amber-400">Nov 2</span>
+                        <span class="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded">Flight to Xining</span>
+                    </div>
+                    <ul class="text-xs space-y-2 text-slate-300">
+                        <li>🚪 11:00 AM Hotel Check-OUT</li>
+                        <li>✈️ <strong>Tibet Airlines TV6095:</strong> XIY-T3 (14:50) ➔ XNN-T3 (16:30)</li>
+                    </ul>
+                    <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] text-slate-500">
+                        TZE E-Ticket: 088-2443304484 | PAK E-Ticket: 088-2443304483
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media Gallery -->
+            <div class="border-t border-slate-800 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-sm font-bold text-amber-300 flex items-center gap-2">
+                        <i class="fa-solid fa-photo-film"></i> Xi'an Media Gallery
+                    </h4>
+                    <span class="text-xs text-slate-400" id="count-xian">Media Gallery</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="gallery-xian"></div>
+            </div>
+        </section>
+
+        <!-- HUB 2: XINING -->
+        <section id="hub-xining" class="hub-card bg-slate-900/70 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-4">
+                <div>
+                    <span class="text-xs font-bold text-sky-400 bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">Hub 2 • 1 Night + Train</span>
+                    <h3 class="text-2xl font-bold text-white mt-2">🕌 Xining & High Altitude Railway (西宁)</h3>
+                    <p class="text-slate-400 text-xs mt-1">Nov 2, 2026 – Nov 4, 2026 • Hotel Base: 青海建银宾馆 (Jianyin Hotel)</p>
+                </div>
+                <a href="https://surl.amap.com/ld3TiBcHcjr" target="_blank" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs px-3.5 py-2 rounded-xl border border-slate-700 transition">
+                    <i class="fa-solid fa-map-location-dot"></i> AMap: 建银宾馆大堂
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div class="text-xs font-bold text-amber-400 mb-2">Nov 2 - 3 • Monasteries & Markets</div>
+                    <ul class="text-xs space-y-2 text-slate-300">
+                        <li>🍢 <a href="https://surl.amap.com/1RoQzsT41c1tx" target="_blank" class="text-sky-400 underline">Shuijing Lane (水井巷)</a> & <a href="https://surl.amap.com/1RzDtINU1k2ce" target="_blank" class="text-sky-400 underline">Mojia Street (莫家街)</a></li>
+                        <li>🛕 <a href="https://surl.amap.com/1S31Zg0C36zE" target="_blank" class="text-sky-400 underline">Kumbum Monastery (塔尔寺)</a></li>
+                        <li>🕌 <a href="https://surl.amap.com/1S0m76Wy1B3O2" target="_blank" class="text-sky-400 underline">DongGuan Mosque (东关清真大寺)</a></li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div class="text-xs font-bold text-amber-400 mb-2">Nov 3 - 4 • Qinghai-Tibet Railway</div>
+                    <ul class="text-xs space-y-2 text-slate-300">
+                        <li>🚂 12:50 PM Board <strong>Train Z8981</strong> at <a href="https://surl.amap.com/ld9WPDA3fk8" target="_blank" class="text-sky-400 underline">Xining Station</a></li>
+                        <li>🏔️ Traversing Tanggula Pass (5,072m) overnight</li>
+                        <li>📍 Arrive <a href="https://surl.amap.com/leduyJk123ZC" target="_blank" class="text-sky-400 underline">Lhasa Railway Station</a> Nov 4 @ 11:20 AM</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-sm font-bold text-sky-300 flex items-center gap-2">
+                        <i class="fa-solid fa-photo-film"></i> Xining & Train Media
+                    </h4>
+                    <span class="text-xs text-slate-400" id="count-xining">Media Gallery</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="gallery-xining"></div>
+            </div>
+        </section>
+
+        <!-- HUB 3: TIBET -->
+        <section id="hub-tibet" class="hub-card bg-slate-900/70 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-4">
+                <div>
+                    <span class="text-xs font-bold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">Hub 3 • 7 Nights</span>
+                    <h3 class="text-2xl font-bold text-white mt-2">🏔️ Tibet Plateau Tour (拉萨 & 日喀则)</h3>
+                    <p class="text-slate-400 text-xs mt-1">Nov 4, 2026 – Nov 11, 2026 • Tour Guide: Tenzin • Hotel Base: 吉祥宝马酒店 / 格萨尔酒店</p>
+                </div>
+                <a href="https://surl.amap.com/l85f4bMm3J8" target="_blank" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs px-3.5 py-2 rounded-xl border border-slate-700 transition">
+                    <i class="fa-solid fa-map-location-dot"></i> AMap: Tashi Nota Hotel
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div class="text-xs font-bold text-amber-400 mb-1">Nov 4 - 6 • Lhasa Sacred Sites</div>
+                    <p class="text-xs text-slate-300 mb-2">Tenzin Pick-Up ➔ Acclimatize at Tashi Nota Hotel</p>
+                    <p class="text-xs text-slate-300">
+                        <a href="https://surl.amap.com/l3JTOoiv2oL" target="_blank" class="text-sky-400 underline">Potala Palace</a>, 
+                        <a href="https://surl.amap.com/l4lXaj81d7qX" target="_blank" class="text-sky-400 underline">Jokhang Temple</a>, 
+                        <a href="https://surl.amap.com/l3XL8e6141S4" target="_blank" class="text-sky-400 underline">Barkhor Street</a>, 
+                        <a href="https://surl.amap.com/l7UaCm66gVI" target="_blank" class="text-sky-400 underline">Drepung</a> & 
+                        <a href="https://surl.amap.com/l7ul2Ku1z0J0" target="_blank" class="text-sky-400 underline">Sera Monasteries</a>
+                    </p>
+                </div>
+
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div class="text-xs font-bold text-amber-400 mb-1">Nov 7 - 8 • Gyantse & Shigatse</div>
+                    <p class="text-xs text-slate-300 mb-2">Gampala Pass ➔ <a href="https://surl.amap.com/liAsW2u1m8AP" target="_blank" class="text-sky-400 underline">Yamdrok Lake</a> ➔ Karola Glacier ➔ Pelkor Chode</p>
+                    <p class="text-xs text-slate-300">Overnight at <a href="https://surl.amap.com/2j2NqSl9xC" target="_blank" class="text-sky-400 underline">Gesar Hotel (格萨尔酒店)</a> & Visit <a href="https://surl.amap.com/k67G7D0s5Lz" target="_blank" class="text-sky-400 underline">Tashilhunpo Monastery</a></p>
+                </div>
+
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div class="text-xs font-bold text-amber-400 mb-1">Nov 9 - 11 • Summer Palace & Departure</div>
+                    <p class="text-xs text-slate-300"><a href="https://surl.amap.com/eIxbUCglb" target="_blank" class="text-sky-400 underline">Norbulingka Palace</a> ➔ Free day (Nov 10)</p>
+                    <p class="text-xs text-slate-300 mt-2">✈️ <strong>China Air CA4404:</strong> <a href="https://surl.amap.com/1W6o2W197He" target="_blank" class="text-sky-400 underline">LXA-T3</a> (16:40) ➔ <a href="https://surl.amap.com/Z4IZ03fPO" target="_blank" class="text-sky-400 underline">CTU-T2</a> (18:55)</p>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-sm font-bold text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-photo-film"></i> Tibet Media Gallery
+                    </h4>
+                    <span class="text-xs text-slate-400" id="count-tibet">Media Gallery</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="gallery-tibet"></div>
+            </div>
+        </section>
+
+        <!-- HUB 4: CHENGDU & EMEI -->
+        <section id="hub-chengdu" class="hub-card bg-slate-900/70 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-4">
+                <div>
+                    <span class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">Hub 4 • 4 Nights</span>
+                    <h3 class="text-2xl font-bold text-white mt-2">🐼 Chengdu & Mt. Emei (成都 & 峨眉山)</h3>
+                    <p class="text-slate-400 text-xs mt-1">Nov 11, 2026 – Nov 15, 2026 • Hotel Base: Mercure Chengdu Chunxi & Jinding Xinxin Hotel</p>
+                </div>
+                <div class="flex gap-2">
+                    <a href="https://surl.amap.com/3cBD2mc9rh" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs px-3 py-2 rounded-xl border border-slate-700 transition">
+                        <i class="fa-solid fa-map-location-dot"></i> Mercure
+                    </a>
+                    <a href="https://surl.amap.com/2cZbixUqX5xS" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs px-3 py-2 rounded-xl border border-slate-700 transition">
+                        <i class="fa-solid fa-map-location-dot"></i> Jinding
+                    </a>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div class="text-xs font-bold text-emerald-400 mb-1">Nov 11 - 13 • Chengdu Pandas & Hotpot</div>
+                    <p class="text-xs text-slate-300">Check-in Mercure Chengdu Chunxi Road. Visit Panda Base, Kuanzhai Alley, and Jinli Street.</p>
+                </div>
+
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div class="text-xs font-bold text-emerald-400 mb-1">Nov 14 • Ascent to Mt. Emei Golden Summit</div>
+                    <p class="text-xs text-slate-300">Train C6275 (09:36 Chengdu East ➔ 10:47 Emeishan). Scenic Bus to Leidongping ➔ Cable Car to Golden Summit.</p>
+                </div>
+
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div class="text-xs font-bold text-emerald-400 mb-1">Nov 15 • Sunrise & HSR to Chongqing</div>
+                    <p class="text-xs text-slate-300">Sunrise at Golden Summit ➔ Descent ➔ Train G8554 (16:10 Emeishan ➔ 19:23 Chongqing Shapingba ¥226)</p>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-sm font-bold text-emerald-300 flex items-center gap-2">
+                        <i class="fa-solid fa-photo-film"></i> Chengdu & Mt. Emei Media
+                    </h4>
+                    <span class="text-xs text-slate-400" id="count-chengdu">Media Gallery</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="gallery-chengdu"></div>
+            </div>
+        </section>
+
+        <!-- HUB 5: CHONGQING -->
+        <section id="hub-chongqing" class="hub-card bg-slate-900/70 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-4">
+                <div>
+                    <span class="text-xs font-bold text-rose-400 bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20">Hub 5 • 6 Nights</span>
+                    <h3 class="text-2xl font-bold text-white mt-2">🌃 Cyberpunk Chongqing (重庆)</h3>
+                    <p class="text-slate-400 text-xs mt-1">Nov 15, 2026 – Nov 21, 2026 • Hotel Base: ANANDA High Altitude River View Hotel (Jiefangbei)</p>
+                </div>
+                <a href="https://surl.amap.com/jQxomTsf1cv" target="_blank" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs px-3.5 py-2 rounded-xl border border-slate-700 transition">
+                    <i class="fa-solid fa-map-location-dot"></i> AMap: 安那达高空江景酒店
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div class="text-xs font-bold text-rose-400 mb-1">Nov 15 - 20 • 3D City Wonders</div>
+                    <p class="text-xs text-slate-300">Explore Hongyadong (洪崖洞), Liziba Monorail building, Ciqikou, Yangtze River Cableway, and night cruises.</p>
+                </div>
+
+                <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div class="text-xs font-bold text-rose-400 mb-1">Nov 21 • Return Flight to Singapore</div>
+                    <p class="text-xs text-slate-300">✈️ <strong>Singapore Airlines SQ819:</strong> <a href="https://surl.amap.com/8MGc0Cy0O5" target="_blank" class="text-sky-400 underline">CKG-T3</a> (02:35) ➔ SIN-T1 (07:50 AM)</p>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-sm font-bold text-rose-300 flex items-center gap-2">
+                        <i class="fa-solid fa-photo-film"></i> Chongqing Media Gallery
+                    </h4>
+                    <span class="text-xs text-slate-400" id="count-chongqing">Media Gallery</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="gallery-chongqing"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Upload Memory Modal -->
+    <div id="uploadModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
+            <button onclick="closeUploadModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="text-lg font-bold text-amber-400 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Add Photo or Video
+            </h3>
+            <p class="text-xs text-slate-400 mb-4">Syncs automatically to your Google account when signed in.</p>
+
+            <form id="uploadForm" onsubmit="handleUploadSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Select Location Hub</label>
+                    <select id="mediaHubSelect" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-400">
+                        <option value="xian">🏛️ Xi'an</option>
+                        <option value="xining">🕌 Xining & Rail</option>
+                        <option value="tibet">🏔️ Tibet Autonomous Region</option>
+                        <option value="chengdu">🐼 Chengdu & Mt. Emei</option>
+                        <option value="chongqing">🌃 Chongqing</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Media Source Type</label>
+                    <select id="mediaSourceType" onchange="toggleSourceInput()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-400">
+                        <option value="url">Web Image URL / Google Drive / Photos</option>
+                        <option value="youtube">YouTube Video / Shorts Link</option>
+                        <option value="file">Local File Upload (Base64)</option>
+                    </select>
+                </div>
+
+                <div id="urlInputContainer">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">URL Link</label>
+                    <input type="url" id="mediaUrlInput" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-400">
+                </div>
+
+                <div id="fileInputContainer" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Choose File</label>
+                    <input type="file" id="mediaFileInput" accept="image/*" class="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-600">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Caption / Notes</label>
+                    <input type="text" id="mediaCaptionInput" required placeholder="e.g. Sunset at Potala Palace" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-400">
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeUploadModal()" class="px-4 py-2 rounded-xl text-xs bg-slate-800 text-slate-300 hover:bg-slate-700">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950">Save Memory</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase Configuration Settings Modal -->
+    <div id="configModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-lg w-full shadow-2xl relative">
+            <button onclick="closeConfigModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="text-lg font-bold text-amber-400 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-gear"></i> Firebase Credentials Configuration
+            </h3>
+            <p class="text-xs text-slate-400 mb-4">Paste your Firebase Project Web SDK Config JSON object below to connect Google Authentication & Cloud Firestore.</p>
+
+            <form onsubmit="saveFirebaseConfig(event)" class="space-y-3">
+                <textarea id="cfgJsonInput" rows="7" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "my-trip.firebaseapp.com",
+  "projectId": "my-trip",
+  "storageBucket": "my-trip.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "1:123456789:web:abcdef"
+}' class="w-full font-mono text-xs bg-slate-950 border border-slate-800 rounded-xl p-3 text-amber-300 focus:outline-none focus:border-amber-400"></textarea>
+
+                <div class="flex justify-between items-center pt-2">
+                    <button type="button" onclick="clearFirebaseConfig()" class="text-xs text-red-400 hover:underline">Reset Config</button>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeConfigModal()" class="px-3.5 py-2 rounded-xl text-xs bg-slate-800 text-slate-300">Close</button>
+                        <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950">Save & Initialize</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Setup Guide Modal -->
+    <div id="setupGuideModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-2xl w-full shadow-2xl max-h-[85vh] overflow-y-auto relative">
+            <button onclick="closeSetupGuide()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="text-xl font-bold text-amber-400 mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-rocket"></i> Register Web App in Firebase Console
+            </h3>
+            
+            <div class="space-y-4 text-xs text-slate-300 leading-relaxed">
+                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                    <p class="font-bold text-amber-300 mb-1">Step 1: Click "Tell us about your app" in your console screen</p>
+                    <p>In your Firebase project overview (shown in your screenshot), click <strong>"Tell us about your app"</strong> or the Web icon <i class="fa-solid fa-code"></i> to register a Web App.</p>
+                </div>
+
+                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                    <p class="font-bold text-amber-300 mb-1">Step 2: Copy the firebaseConfig Object</p>
+                    <p>Enter an app nickname (e.g. <em>MyTripWeb</em>), click <strong>Register App</strong>, then copy the generated <code class="text-amber-400">firebaseConfig</code> JSON object.</p>
+                </div>
+
+                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                    <p class="font-bold text-amber-300 mb-1">Step 3: Enable Google Auth & Firestore</p>
+                    <p>In the left sidebar of Firebase Console:</p>
+                    <ul class="list-disc list-inside mt-1 space-y-1 text-slate-400">
+                        <li>Go to <strong>Authentication</strong> ➔ Get Started ➔ Enable <strong>Google</strong> provider.</li>
+                        <li>Go to <strong>Firestore Database</strong> ➔ Create Database ➔ Start in <strong>Test Mode</strong>.</li>
+                    </ul>
+                </div>
+
+                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                    <p class="font-bold text-amber-300 mb-1">Step 4: Paste Credentials into this Page</p>
+                    <p>Click the <strong>Firebase Settings</strong> button at the top right of this web page and paste your config JSON!</p>
+                </div>
+            </div>
+
+            <div class="mt-6 text-right">
+                <button onclick="closeSetupGuide(); openConfigModal();" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl">
+                    Open Settings & Paste Config
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox Modal -->
+    <div id="lightboxModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden" onclick="closeLightbox()">
+        <div class="relative max-w-4xl w-full flex flex-col items-center" onclick="event.stopPropagation()">
+            <button onclick="closeLightbox()" class="absolute -top-10 right-0 text-white text-2xl hover:text-amber-400"><i class="fa-solid fa-xmark"></i></button>
+            <img id="lightboxImg" src="" alt="View" class="max-h-[80vh] w-auto rounded-xl shadow-2xl border border-slate-800">
+            <p id="lightboxCaption" class="text-sm text-slate-300 mt-3 text-center"></p>
+        </div>
+    </div>
+
+    <!-- Video Modal -->
+    <div id="videoModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden" onclick="closeVideoPlayer()">
+        <div class="relative max-w-3xl w-full flex flex-col items-center bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden" onclick="event.stopPropagation()">
+            <div class="w-full p-3 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+                <span id="videoTitle" class="text-xs font-bold text-amber-400"></span>
+                <button onclick="closeVideoPlayer()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="videoContainer" class="w-full aspect-video bg-black flex items-center justify-center"></div>
+        </div>
+    </div>
+
+    <!-- App Logic Script -->
+    <script>
+        // Pre-seeded Default Travel Media Items
+        const DEFAULT_MEDIA = {
+            xian: [
+                { type: 'photo', url: 'https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&w=800&q=80', caption: 'Bell Tower of Xi\'an at Night' },
+                { type: 'photo', url: 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?auto=format&fit=crop&w=800&q=80', caption: 'Terracotta Warriors Army' },
+                { type: 'photo', url: 'https://images.unsplash.com/photo-1543083477-4f785aeafaa9?auto=format&fit=crop&w=800&q=80', caption: 'Muslim Quarter Street Food' }
+            ],
+            xining: [
+                { type: 'photo', url: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80', caption: 'Kumbum Monastery' },
+                { type: 'photo', url: 'https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&w=800&q=80', caption: 'Qinghai-Tibet Railway Train' }
+            ],
+            tibet: [
+                { type: 'photo', url: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80', caption: 'Potala Palace Sanctuary' },
+                { type: 'photo', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80', caption: 'Yamdrok Lake Turquoise Water' },
+                { type: 'photo', url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80', caption: 'Barkhor Street Kora' }
+            ],
+            chengdu: [
+                { type: 'photo', url: 'https://images.unsplash.com/photo-1564349683136-77e08dba1ef9?auto=format&fit=crop&w=800&q=80', caption: 'Giant Panda at Chengdu Base' },
+                { type: 'photo', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80', caption: 'Mount Emei Golden Summit' }
+            ],
+            chongqing: [
+                { type: 'photo', url: 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?auto=format&fit=crop&w=800&q=80', caption: 'Hongyadong Illuminated Stilted Buildings' },
+                { type: 'photo', url: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80', caption: 'Liziba Monorail Station' }
+            ]
+        };
+
+        let firebaseInitialized = false;
+        let currentUser = null;
+        let db = null;
+        let auth = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadInitialConfig();
+            renderAllGalleries();
+        });
+
+        // Initialize Firebase with saved config
+        function loadInitialConfig() {
+            const savedConfig = localStorage.getItem('trip_firebase_cfg');
+            const dot = document.getElementById('cfgDot');
+            const txt = document.getElementById('cfgStatusText');
+
+            if (savedConfig) {
+                try {
+                    const cfg = JSON.parse(savedConfig);
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(cfg);
+                    }
+                    auth = firebase.auth();
+                    db = firebase.firestore();
+                    firebaseInitialized = true;
+
+                    dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+                    txt.innerText = "Firebase Active";
+
+                    // Auth State Observer
+                    auth.onAuthStateChanged(user => {
+                        currentUser = user;
+                        updateAuthUI(user);
+                        if (user) syncMediaFromCloud();
+                    });
+                } catch (e) {
+                    console.error("Invalid saved Firebase config", e);
+                    dot.className = "w-2 h-2 rounded-full bg-red-400";
+                    txt.innerText = "Config Error";
+                }
+            } else {
+                dot.className = "w-2 h-2 rounded-full bg-amber-400";
+                txt.innerText = "Setup Firebase";
+            }
+        }
+
+        function saveFirebaseConfig(e) {
+            e.preventDefault();
+            const jsonText = document.getElementById('cfgJsonInput').value.trim();
+            try {
+                const parsed = JSON.parse(jsonText);
+                localStorage.setItem('trip_firebase_cfg', JSON.stringify(parsed));
+                closeConfigModal();
+                location.reload();
+            } catch (err) {
+                alert("Invalid JSON format! Please copy the exact object from Firebase console.");
+            }
+        }
+
+        function clearFirebaseConfig() {
+            localStorage.removeItem('trip_firebase_cfg');
+            location.reload();
+        }
+
+        // Google Sign-In
+        function loginWithGoogle() {
+            if (!firebaseInitialized) {
+                openConfigModal();
+                return;
+            }
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(err => {
+                alert("Login Error: " + err.message);
+            });
+        }
+
+        function logoutFirebase() {
+            if (auth) auth.signOut();
+        }
+
+        function updateAuthUI(user) {
+            const loginBtn = document.getElementById('loginBtn');
+            const userProfile = document.getElementById('userProfile');
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+
+            if (user) {
+                loginBtn.classList.add('hidden');
+                userProfile.classList.remove('hidden');
+                userAvatar.src = user.photoURL || 'https://placehold.co/100x100/amber/slate?text=U';
+                userName.innerText = user.displayName || 'Traveler';
+            } else {
+                loginBtn.classList.remove('hidden');
+                userProfile.classList.add('hidden');
+            }
+        }
+
+        // Local & Cloud Media Rendering
+        function getCombinedMedia(hub) {
+            const localSaved = JSON.parse(localStorage.getItem(`memories_${hub}`) || '[]');
+            return [...(DEFAULT_MEDIA[hub] || []), ...localSaved];
+        }
+
+        function renderAllGalleries() {
+            ['xian', 'xining', 'tibet', 'chengdu', 'chongqing'].forEach(hub => {
+                const container = document.getElementById(`gallery-${hub}`);
+                if (!container) return;
+                const items = getCombinedMedia(hub);
+                
+                document.getElementById(`count-${hub}`).innerText = `${items.length} Memories`;
+                container.innerHTML = items.map(item => `
+                    <div class="media-card media-hover relative rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shadow-md group cursor-pointer" onclick="handleMediaClick('${item.type}', '${item.url}', '${item.caption.replace(/'/g, "\\'")}')">
+                        <img src="${item.url}" alt="${item.caption}" class="w-full h-40 object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://placehold.co/600x400/1e293b/amber?text=Trip+Memory'">
+                        <div class="media-overlay absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent opacity-85 group-hover:opacity-100 transition p-3 flex flex-col justify-end">
+                            <span class="text-[10px] bg-amber-500 text-slate-950 px-2 py-0.5 rounded font-bold w-max mb-1 uppercase">${item.type}</span>
+                            <p class="text-xs font-semibold text-white leading-tight">${item.caption}</p>
+                        </div>
+                    </div>
+                `).join('');
+            });
+        }
+
+        // Sync Firestore Memories to Local View
+        async function syncMediaFromCloud() {
+            if (!db || !currentUser) return;
+            try {
+                const snapshot = await db.collection('users').doc(currentUser.uid).collection('memories').get();
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.hub) {
+                        const local = JSON.parse(localStorage.getItem(`memories_${data.hub}`) || '[]');
+                        if (!local.some(m => m.url === data.url)) {
+                            local.push(data);
+                            localStorage.setItem(`memories_${data.hub}`, JSON.stringify(local));
+                        }
+                    }
+                });
+                renderAllGalleries();
+            } catch (err) {
+                console.log("Firestore sync warning", err);
+            }
+        }
+
+        // Upload Submit Handler
+        function handleUploadSubmit(e) {
+            e.preventDefault();
+            const hub = document.getElementById('mediaHubSelect').value;
+            const sourceType = document.getElementById('mediaSourceType').value;
+            const caption = document.getElementById('mediaCaptionInput').value;
+
+            let mediaUrl = '';
+            if (sourceType === 'file') {
+                const fileInput = document.getElementById('mediaFileInput');
+                if (fileInput.files && fileInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        saveMediaItem(hub, 'photo', event.target.result, caption);
+                    };
+                    reader.readAsDataURL(fileInput.files[0]);
+                    return;
+                }
+            } else {
+                mediaUrl = document.getElementById('mediaUrlInput').value;
+                const type = (sourceType === 'youtube') ? 'video' : 'photo';
+                saveMediaItem(hub, type, mediaUrl, caption);
+            }
+        }
+
+        async function saveMediaItem(hub, type, url, caption) {
+            const item = { hub, type, url, caption, createdAt: Date.now() };
+
+            // Save Local
+            const local = JSON.parse(localStorage.getItem(`memories_${hub}`) || '[]');
+            local.push(item);
+            localStorage.setItem(`memories_${hub}`, JSON.stringify(local));
+
+            // Sync Cloud if logged in
+            if (db && currentUser) {
+                try {
+                    await db.collection('users').doc(currentUser.uid).collection('memories').add(item);
+                } catch (e) {
+                    console.error("Cloud save failed", e);
+                }
+            }
+
+            renderAllGalleries();
+            closeUploadModal();
+            document.getElementById('uploadForm').reset();
+        }
+
+        // UI Interactions
+        function filterHub(hubId) {
+            const cards = document.querySelectorAll('.hub-card');
+            const btns = document.querySelectorAll('.nav-btn');
+
+            btns.forEach(b => b.classList.replace('bg-amber-500', 'bg-slate-800'));
+            event.currentTarget.classList.replace('bg-slate-800', 'bg-amber-500');
+
+            cards.forEach(c => {
+                c.style.display = (hubId === 'all' || c.id === `hub-${hubId}`) ? 'block' : 'none';
+            });
+        }
+
+        function toggleSourceInput() {
+            const type = document.getElementById('mediaSourceType').value;
+            document.getElementById('urlInputContainer').classList.toggle('hidden', type === 'file');
+            document.getElementById('fileInputContainer').classList.toggle('hidden', type !== 'file');
+        }
+
+        function handleMediaClick(type, url, caption) {
+            if (type === 'video' || url.includes('youtube') || url.includes('youtu.be')) {
+                openVideoPlayer(url, caption);
+            } else {
+                openLightbox(url, caption);
+            }
+        }
+
+        function openLightbox(url, caption) {
+            document.getElementById('lightboxImg').src = url;
+            document.getElementById('lightboxCaption').innerText = caption;
+            document.getElementById('lightboxModal').classList.remove('hidden');
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightboxModal').classList.add('hidden');
+        }
+
+        function openVideoPlayer(url, title) {
+            const container = document.getElementById('videoContainer');
+            document.getElementById('videoTitle').innerText = title;
+            let embedUrl = url;
+            if (url.includes('watch?v=')) embedUrl = url.replace('watch?v=', 'embed/');
+            
+            container.innerHTML = `<iframe src="${embedUrl}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>`;
+            document.getElementById('videoModal').classList.remove('hidden');
+        }
+
+        function closeVideoPlayer() {
+            document.getElementById('videoContainer').innerHTML = '';
+            document.getElementById('videoModal').classList.add('hidden');
+        }
+
+        function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
+        function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); }
+        function openConfigModal() { document.getElementById('configModal').classList.remove('hidden'); }
+        function closeConfigModal() { document.getElementById('configModal').classList.add('hidden'); }
+        function openSetupGuide() { document.getElementById('setupGuideModal').classList.remove('hidden'); }
+        function closeSetupGuide() { document.getElementById('setupGuideModal').classList.add('hidden'); }
+    </script>
+</body>
+</html>
